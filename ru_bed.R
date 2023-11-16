@@ -124,3 +124,11 @@ print(gene.bed.df)
 
 write.table(gene.bed.df, file=paste(outname, "named.targets.bed", sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
 write.table(subset(gene.bed.df, select=-c(external_gene_name)), file=paste(outname, "targets.bed", sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
+
+# print out the total % of genome covered by these targets
+
+gene.bed.df$span <- as.numeric(gene.bed.df$end_position) - as.numeric(gene.bed.df$start_position)
+totalLength <- sum(gene.bed.df$span)
+
+sprintf("Total target size is %2.2f MB", totalLength/1000000)
+sprintf("Total percent of diploid human genome is %2.2f percent", totalLength/31000000)
