@@ -23,6 +23,7 @@ outputs testcase.targets.bed and testcase.named.targets.bed, as well as:
 [1] "Total percent of diploid human genome is 0.04 percent"
 ```
 
+```
 Options:
         -c CONTROLS, --controls=CONTROLS
                 Controls genes to output, separated by '-'. default COL1A and FMR.
@@ -41,6 +42,8 @@ Options:
 
         -h, --help
                 Show help message and exit
+
+```
 
 If running with shell script rather than Rscript, do not supply positional arguments, use the following flags:
 
