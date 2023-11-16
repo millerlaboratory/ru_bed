@@ -6,11 +6,22 @@ Supply a list of genes separated by '-' and a prefix for the name of your target
 
 By default outputs a bedfile for use with adaptive sampling and a tab separated bed file with gene names for downstream use with samtools.
 
-Output is also printed to stdout.
+Output is also printed to stdout, along with the total target size and percent of diploid human genome (estiamted at 3.1 GB)
 
 Example:
-``` Rscript ru_bed.R F8-F9-NDN testcase``` **OR** ```./ru_bed.sh -t F8-R9-NDN -n testcase```
-outputs testcase.targets.bed and testcase.named.targets.bed
+``` Rscript ru_bed.R F8-F9 example``` **OR** ```./ru_bed.sh -t F8-R9-NDN -n testcase```
+outputs testcase.targets.bed and testcase.named.targets.bed, as well as:
+
+```
+  external_gene_name chromosome_name start_position end_position
+1                 F9            chrX      139400000    139700000
+2               FMR1            chrX      147850000    148050000
+3                 F8            chrX      154700000    155150000
+4             COL1A1           chr17       50100000     50300000
+
+[1] "Total target size is 1.15 MB"
+[1] "Total percent of diploid human genome is 0.04 percent"
+```
 
 Options:
         -c CONTROLS, --controls=CONTROLS
