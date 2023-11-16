@@ -2,7 +2,7 @@
 
 `Usage: Rscript ru_bed.R [options] genelist prefix`
 
-Supply a list of genes separated by '-' and a prefix for the name of your target files.
+Supply a list of genes separated by '-' and a prefix for the name of your target files. 
 
 By default outputs a bedfile for use with adaptive sampling and a tab separated bed file with gene names for downstream use with samtools.
 
@@ -10,7 +10,7 @@ Output is also printed to stdout, along with the total target size and percent o
 
 Example:
 ``` Rscript ru_bed.R F8-F9 testcase``` **OR** ```./ru_bed.sh -t F8-R9 -n testcase```
-outputs testcase.targets.bed and testcase.named.targets.bed, as well as:
+outputs files named `testcase.targets.bed` and `testcase.named.targets.bed`, as well as the following to stdout:
 
 ```
   external_gene_name chromosome_name start_position end_position
@@ -23,8 +23,9 @@ outputs testcase.targets.bed and testcase.named.targets.bed, as well as:
 [1] "Total percent of diploid human genome is 0.04 percent"
 ```
 
+## Options
+
 ```
-Options:
         -c CONTROLS, --controls=CONTROLS
                 Controls genes to output, separated by '-'. default COL1A and FMR.
 
@@ -51,5 +52,18 @@ If running with shell script rather than Rscript, do not supply positional argum
 
         -n prefix for named files
 
-The long form of flags are also not available in the shell script (use -c, not --controls).
+The long form of flags are also not available in the shell script (use `-c``, not `--controls`).
     
+## Requirements
+
+- R version 4.3.2
+- R-dplyr
+- R-plyr
+- R-optparse
+
+If not using the supplied filtered ensembl file, you will also need `BiomArt` (`bioconductor-biomart`).
+
+If running on McClintock, all required libraries are included in the module `Rtools/1.0`. This module is automatically loaded as part of the shell wrapper script.
+
+Otherwise make a conda environment using the .yaml file included here in `/resources`.
+

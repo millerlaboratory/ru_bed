@@ -9,3 +9,4 @@ dependencies:
   - r-plyr
   - r-dplyr
   - r-optparse
+  - r-bioconductor-biomart
