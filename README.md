@@ -1,6 +1,6 @@
 # ru_bed
 
-`Usage: ru_bed.R [options] genelist prefix`
+`Usage: Rscript ru_bed.R [options] genelist prefix`
 
 Supply a list of genes separated by '-' and a prefix for the name of your target files.
 
@@ -34,7 +34,7 @@ Options:
 If running with shell script rather than Rscript, do not supply positional arguments, use the following flags:
 
         -t names of genes to target, separated by '-'
-        
+
         -n prefix for named files
 
 The long form of flags are also not available in the shell script (use -c, not --controls).
