@@ -8,7 +8,7 @@ option_list <- list(make_option(c("-c", "--controls"), action="store", help="Con
                     make_option(c("-b", "--buffer"), action="store", type="integer", default=100000, help="buffer to add to each side of each target. default is 100kb."),
                     make_option(c("-g", "--nonamesave"), action="store_true", help="Omit saving a copy of bed file with gene names, default false.", default=FALSE),
                     make_option(c("-e", "--ensembl"), action="store", help="Ensembl library file (csv). Including one increases performance speed. default included.", default="resources/ensemble.library.csv"),
-                    make_option(c("--controlBuffer"), action="store", help="Specify control buffer length, if different from gene buffer. default is 50kb.", default=50000)
+                    make_option(c("-B", "--controlBuffer"), action="store", help="Specify control buffer length, if different from gene buffer. default is 50kb.", default=50000)
                     )
 
 parser <- OptionParser(usage="%prog [options] genelist prefix", option_list=option_list, description="\nSupply a list of genes separated by '-' and a prefix for the name of your target files.\n
@@ -43,7 +43,6 @@ fixOverlapRecur <- function(df, index=1){
   while(i < dim(df)[1]){
     #test for overlap
     if(df[i+1, "start_position"] <= df[i, "end_position"]){
-      print(paste("adjusting", i))
       startpos <- df[i, "start_position"]
       gene_name <- paste(df[i,"external_gene_name"], df[i+1, "external_gene_name"], sep="-")
       chrname <- df[i, "chromosome_name"]
@@ -59,7 +58,6 @@ fixOverlapRecur <- function(df, index=1){
       return(fixOverlapRecur(df, i))
     } else {
       i = i+1
-      print(i)
       return(fixOverlapRecur(df, i))
     }
   }

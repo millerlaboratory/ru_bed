@@ -9,7 +9,7 @@ By default outputs a bedfile for use with adaptive sampling and a tab separated 
 Output is also printed to stdout.
 
 Example:
-``` ./makeRUTarget.R F8-F9-NDN testcase```
+``` Rscript ru_bed.R F8-F9-NDN testcase``` **OR** ```./ru_bed.sh -t F8-R9-NDN -n testcase```
 outputs testcase.targets.bed and testcase.named.targets.bed
 
 Options:
@@ -30,3 +30,12 @@ Options:
 
         -h, --help
                 Show help message and exit
+
+If running with shell script rather than Rscript, do not supply positional arguments, use the following flags:
+
+        -t names of genes to target, separated by '-'
+        
+        -n prefix for named files
+
+The long form of flags are also not available in the shell script (use -c, not --controls).
+    
