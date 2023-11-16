@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - base
+  - bioconda
+  - R
+dependencies:
+  - r-base=4.2.3
+  - r-essentials
+  - r-plyr
+  - r-dplyr
+  - r-optparse
