@@ -9,7 +9,7 @@ By default outputs a bedfile for use with adaptive sampling and a tab separated 
 Output is also printed to stdout, along with the total target size and percent of diploid human genome (estiamted at 3.1 GB)
 
 Example:
-``` Rscript ru_bed.R F8-F9 example``` **OR** ```./ru_bed.sh -t F8-R9-NDN -n testcase```
+``` Rscript ru_bed.R F8-F9 example``` **OR** ```./ru_bed.sh -t F8-R9 -n testcase```
 outputs testcase.targets.bed and testcase.named.targets.bed, as well as:
 
 ```
