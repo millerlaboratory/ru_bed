@@ -122,8 +122,11 @@ gene.bed.df <- makeTargetedBed(geneList, ensembleLibraryFile=ensemblpath, buffer
 
 print(gene.bed.df)
 
-write.table(gene.bed.df, file=paste(outname, "named.targets.bed", sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
-write.table(subset(gene.bed.df, select=-c(external_gene_name)), file=paste(outname, "targets.bed", sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
+
+#write.csv2(gene.bed.df, file=paste(outname, ".named.targets.bed", sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE)
+#write.csv2(subset(gene.bed.df, select=-c(external_gene_name)), file=paste(outname, ".targets.bed", sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE)
+write.table(gene.bed.df, file=paste(outname, ".named.targets.bed", sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep=",")
+write.table(subset(gene.bed.df, select=-c(external_gene_name)), file=paste(outname, ".targets.bed", sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep=",")
 
 # print out the total % of genome covered by these targets
 

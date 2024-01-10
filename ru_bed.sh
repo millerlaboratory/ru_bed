@@ -56,8 +56,13 @@ then
     exit 1
 fi
 
-COMMAND="Rscript ru_bed.R $OPTIONS $TARGETS $NAME"
+COMMAND="Rscript ru_bed.R $OPTIONS $TARGETS $NAME.temp"
 
 echo "running $COMMAND"
 echo ""
 $COMMAND
+
+cat $NAME.temp.targets.bed | tr -d ' '| tr ',' '\t' > $NAME.targets.bed
+rm $NAME.temp.targets.bed
+cat $NAME.temp.named.targets.bed | tr -d ' ' | tr ',' '\t' > $NAME.named.targets.bed
+rm $NAME.temp.named.targets.bed
