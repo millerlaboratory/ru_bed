@@ -4,7 +4,7 @@ suppressPackageStartupMessages(library(optparse))
 suppressPackageStartupMessages(library(plyr))
 suppressPackageStartupMessages(library(dplyr))
 
-option_list <- list(make_option(c("-c", "--controls"), action="store", help="Controls genes to output, separated by '-'. default COL1A and FMR.", default="COL1A1-FMR1"),
+option_list <- list(make_option(c("-c", "--controls"), action="store", help="Controls genes to output, separated by '-'. default COL1A, NDN and FMR.", default="COL1A1-FMR1-NDN"),
                     make_option(c("-b", "--buffer"), action="store", type="integer", default=100000, help="buffer to add to each side of each target. default is 100kb."),
                     make_option(c("-g", "--nonamesave"), action="store_true", help="Omit saving a copy of bed file with gene names, default false.", default=FALSE),
                     make_option(c("-e", "--ensembl"), action="store", help="Ensembl library file (csv). Including one increases performance speed. default included.", default="resources/ensemble.library.csv"),
