@@ -17,6 +17,7 @@ Help()
   echo "-g : Omit saving a copy of bed file with gene names, default false."
   echo "-e : Ensembl library file (csv). Including one increases performance speed. default included."
   echo "-B : Specify control buffer length, if different from gene buffer. default is 50kb."
+  echo "-N : Naked run. No buffer is used and no controls are used. Overwrites other options."
   echo "-h: view this help and exit"
   echo ""
   echo ""
@@ -24,7 +25,7 @@ Help()
 
 OPTIONS=""
 
-while getopts "n:t:c:b:ge:B:h" option; do
+while getopts "n:t:c:b:ge:B:hN" option; do
   case $option in
     n) NAME=$OPTARG ;;
     h) Help
@@ -35,6 +36,7 @@ while getopts "n:t:c:b:ge:B:h" option; do
     g) OPTIONS="$OPTIONS -g";;
     e) OPTIONS="$OPTIONS -e $OPTARG";;
     B) OPTIONS="$OPTIONS -B $OPTARG";;
+    N) OPTIONS="$OPTIONS -n";;
   esac
 done
 

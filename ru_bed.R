@@ -8,7 +8,8 @@ option_list <- list(make_option(c("-c", "--controls"), action="store", help="Con
                     make_option(c("-b", "--buffer"), action="store", type="integer", default=100000, help="buffer to add to each side of each target. default is 100kb."),
                     make_option(c("-g", "--nonamesave"), action="store_true", help="Omit saving a copy of bed file with gene names, default false.", default=FALSE),
                     make_option(c("-e", "--ensembl"), action="store", help="Ensembl library file (csv). Including one increases performance speed. default included.", default="resources/ensemble.library.csv"),
-                    make_option(c("-B", "--controlBuffer"), action="store", help="Specify control buffer length, if different from gene buffer. default is 50kb.", default=50000)
+                    make_option(c("-B", "--controlBuffer"), action="store", help="Specify control buffer length, if different from gene buffer. default is 50kb.", default=50000),
+                    make_option(c("-n", "--naked"), action="store_true", help="Do not add any buffer or round targets, do not include controls", default=FALSE)
                     )
 
 parser <- OptionParser(usage="%prog [options] genelist prefix", option_list=option_list, description="\nSupply a list of genes separated by '-' and a prefix for the name of your target files.\n
@@ -34,6 +35,7 @@ if(length(controlGenes) < 1){
 buffer=opt$buffer
 controlBuffer=opt$controlBuffer
 ensemblpath=opt$ensembl
+naked=opt$naked
 
 namesaveskip=opt$nonamesave
 
@@ -105,11 +107,18 @@ makeTargetedBed <- function(geneList, ensembleLibraryFile=NA, buffer=100000, con
   
   chrs <- unique(bed.df$chromosome_name)
   chdf1 <- bed.df[which(bed.df$chromosome_name==chrs[1]),]
-  mergedf <- fixOverlapRecur(chdf1)
-  
+  if(naked==TRUE){
+    mergedf <- chdf1 %>% dplyr::distinct(external_gene_name, .keep_all=TRUE)
+  }else{
+    mergedf <- fixOverlapRecur(chdf1)
+  }
   for (chr in chrs[2:length(chrs)]){
     df <- bed.df[which(bed.df$chromosome_name==chr),]
-    newdf <- fixOverlapRecur(df)
+    if(naked==TRUE){
+      newdf <- df %>% dplyr::distinct(external_gene_name, .keep_all=TRUE)
+    }else{
+     newdf <- fixOverlapRecur(df)
+    }
     mergedf <- rbind(mergedf, newdf)
   }
   
@@ -118,8 +127,12 @@ makeTargetedBed <- function(geneList, ensembleLibraryFile=NA, buffer=100000, con
 }
 
 # runtime
+if(naked==TRUE){
+  gene.bed.df <- makeTargetedBed(geneList[2:length(geneList)], ensembleLibraryFile=ensemblpath, buffer=0, controlBuffer=0, controlList=geneList[1], returnGeneName=TRUE, round=FALSE)
+  gene.bed.df <- gene.bed.df %>% filter(chromosome_name %in% c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY", "chrM"))
+} else {
 gene.bed.df <- makeTargetedBed(geneList, ensembleLibraryFile=ensemblpath, buffer=buffer, controlBuffer=controlBuffer, controlList=controlGenes, returnGeneName=TRUE)
-
+}
 print(gene.bed.df)
 
 
