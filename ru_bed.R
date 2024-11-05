@@ -22,6 +22,9 @@ opt <- arguments$options
 genestring <- arguments$args[1]
 outname <- arguments$args[2]
 
+chrom.ok <- c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12",
+"chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY", "chrM")
+
 geneList <- stringr::str_split(genestring, "-")[[1]]
 if(length(geneList) < 1){
   stop(sprintf("ru_bed did not understand gene list input: %s", genestring))
@@ -129,9 +132,10 @@ makeTargetedBed <- function(geneList, ensembleLibraryFile=NA, buffer=100000, con
 # runtime
 if(naked==TRUE){
   gene.bed.df <- makeTargetedBed(geneList[2:length(geneList)], ensembleLibraryFile=ensemblpath, buffer=0, controlBuffer=0, controlList=geneList[1], returnGeneName=TRUE, round=FALSE)
-  gene.bed.df <- gene.bed.df %>% filter(chromosome_name %in% c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY", "chrM"))
+  gene.bed.df <- gene.bed.df %>% filter(chromosome_name %in% chrom.ok)
 } else {
 gene.bed.df <- makeTargetedBed(geneList, ensembleLibraryFile=ensemblpath, buffer=buffer, controlBuffer=controlBuffer, controlList=controlGenes, returnGeneName=TRUE)
+gene.bed.df <- gene.bed.df %>% filter(chromosome_name %in% chrom.ok)
 }
 print(gene.bed.df)
 
