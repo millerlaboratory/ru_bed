@@ -19,7 +19,7 @@ Total target size and percent of diploid human genome (estiamted at 3.1 GB) is o
 
 
 Example:
-``` bash ru_bed_v3.sh -t F8,F9 -n testcase```
+``` bash ru_bed_v3.sh -t F8,F9,SNURF,SNRPN -n testcase```
 
 outputs files named `testcase.targets.bed`, `testcase.named.targets.bed`, and `testcase.naked.named.targets.bed`
 
@@ -27,10 +27,11 @@ outputs files named `testcase.targets.bed`, `testcase.named.targets.bed`, and `t
 using default controls
 
 
-total unbuffered target size (Mb): .28
-total unbuffered target genome percentage: 0 %
-total final target size (Mb): 1.28
-total final target genome percentage: .04 %
+
+total unbuffered target size (Mb): .46
+total unbuffered target genome percentage: .01 %
+total final target size (Mb): 1.63
+total final target genome percentage: .05 %
 
 ```
 
@@ -38,6 +39,7 @@ total final target genome percentage: .04 %
 > cat testcase.named.targets.bed
 
 chr15   23585400        23787305        NDN
+chr15   24723637        25078723        SNRPN.SNURF
 chr17   50084101        50301632        COL1A1
 chrX    139430739       139663459       F9
 chrX    147811919       148051125       FMR1
@@ -46,6 +48,7 @@ chrX    154735788       155126940       F8
 > cat testcase.targets.bed
 
 chr15   23585400        23787305
+chr15   24723637        25078723
 chr17   50084101        50301632
 chrX    139430739       139663459
 chrX    147811919       148051125
@@ -54,6 +57,8 @@ chrX    154735788       155126940
 > cat testcase.naked.named.targets.bed 
 
 chr15   23685400        23687305        NDN
+chr15   24823637        24978723        SNRPN
+chr15   24954987        24977850        SNURF
 chr17   50184101        50201632        COL1A1
 chrX    139530739       139563459       F9
 chrX    147911919       147951125       FMR1
@@ -92,7 +97,7 @@ chrX    154835788       155026940       F8
                 enter each as a coordinate,name pair and separate targets by semicolons.
 
                 these regions must not contain dashes in the regionnames, please replace with underscores
-                
+
                 example: -m chrX:12345_23456,random;chrY:23455_23456,random2"
 
 ```     
