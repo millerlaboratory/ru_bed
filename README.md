@@ -4,6 +4,7 @@
 
 Supply a list of genes separated by ',' and a prefix for the name of your target files. 
 
+Each gene is buffered (by default 50kb) and overlapping regions are merged.
 
 By default outputs a bedfile for use with adaptive sampling, a tab separated bed file with gene names for downstream use with samtools, and a bed file containing unbuffered gene targets.
 
