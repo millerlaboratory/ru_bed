@@ -1,69 +1,89 @@
 # ru_bed
 
-`Usage: Rscript ru_bed.R [options] genelist prefix`
+`Usage: bash ru_bed_v3.sh [options]`
 
-Supply a list of genes separated by '-' and a prefix for the name of your target files. 
+Supply a list of genes separated by ',' and a prefix for the name of your target files. 
 
-By default outputs a bedfile for use with adaptive sampling and a tab separated bed file with gene names for downstream use with samtools.
 
-Output is also printed to stdout, along with the total target size and percent of diploid human genome (estiamted at 3.1 GB)
+By default outputs a bedfile for use with adaptive sampling, a tab separated bed file with gene names for downstream use with samtools, and a bed file containing unbuffered gene targets.
+
+Default behavior saves a copy of named and unbuffered files to /n/alignments/bed_targets/ -- disable this with flag `-s`.
+
+Targets that could not be located are output to ${prefix}.errors.txt and an error is printed to STDOUT
+
+If more than one target region matches the supplied genenames, both are saved and a warning is printed.
+
+Targets are no longer rounded to the nearest 50kb -- to enable this, use flag `-R`
+
+Total target size and percent of diploid human genome (estiamted at 3.1 GB) is output to screen for both buffered and unbuffered input
+
 
 Example:
-``` Rscript ru_bed.R F8-F9 testcase``` **OR** ```./ru_bed.sh -t F8-R9 -n testcase```
-outputs files named `testcase.targets.bed` and `testcase.named.targets.bed`, as well as the following to stdout:
+``` bash ru_bed_v3.sh -t F8,F9 -n testcase```
+
+outputs files named `testcase.targets.bed`, `testcase.named.targets.bed`, and `testcase.naked.named.targets.bed`
 
 ```
-  external_gene_name chromosome_name start_position end_position
-1                 F9            chrX      139400000    139700000
-2               FMR1            chrX      147850000    148050000
-3                 F8            chrX      154700000    155150000
-4             COL1A1           chr17       50100000     50300000
+using default controls
 
-[1] "Total target size is 1.15 MB"
-[1] "Total percent of diploid human genome is 0.04 percent"
+
+total unbuffered target size (Mb): .28
+total unbuffered target genome percentage: 0 %
+total final target size (Mb): 1.28
+total final target genome percentage: .04 %
+
+```
+
+```
+> cat testcase.named.targets.bed
+
+chr15   23585400        23787305        NDN
+chr17   50084101        50301632        COL1A1
+chrX    139430739       139663459       F9
+chrX    147811919       148051125       FMR1
+chrX    154735788       155126940       F8
+
+> cat testcase.targets.bed
+
+chr15   23585400        23787305
+chr17   50084101        50301632
+chrX    139430739       139663459
+chrX    147811919       148051125
+chrX    154735788       155126940
+
+> cat testcase.naked.named.targets.bed 
+
+chr15   23685400        23687305        NDN
+chr17   50184101        50201632        COL1A1
+chrX    139530739       139563459       F9
+chrX    147911919       147951125       FMR1
+chrX    154835788       155026940       F8
+
 ```
 
 ## Options
 
 ```
-        -c CONTROLS, --controls=CONTROLS
-                Controls genes to output, separated by '-'. default COL1A and FMR.
+        -c CONTROLS
+                Controls genes to output, separated by ','. default COL1A1,FMR1,NDN
 
-        -b BUFFER, --buffer=BUFFER
+        -b BUFFER
                 buffer to add to each side of each target. default is 100kb.
 
-        -g, --nonamesave
-                Omit saving a copy of bed file with gene names, default false.
 
-        -e ENSEMBL, --ensembl=ENSEMBL
-                Ensembl library file (csv). Including one increases performance speed. default included.
+        -B CONTROLBUFFER
+                Specify control buffer length, if different from gene buffer. default is 100kb.
 
-        --controlBuffer=CONTROLBUFFER
-                Specify control buffer length, if different from gene buffer. default is 50kb.
-
-        -h, --help
+        -h
                 Show help message and exit
 
-```
+        -N Naked run
+                No buffer is used and no controls are used. Overwrites other options
 
-If running with shell script rather than Rscript, do not supply positional arguments, use the following flags:
+        -s networksave
+                do not save files to network locations
 
-        -t names of genes to target, separated by '-'
+        -R round
+                round to nearest 50kb when printing buffered targets
 
-        -n prefix for named files
-
-The long form of flags are also not available in the shell script (use `-c``, not `--controls`).
-    
-## Requirements
-
-- R version 4.3.2
-- R-dplyr
-- R-plyr
-- R-optparse
-
-If not using the supplied filtered ensembl file, you will also need `BiomArt` (`bioconductor-biomart`).
-
-If running on McClintock, all required libraries are included in the module `Rtools/1.0`. This module is automatically loaded as part of the shell wrapper script.
-
-Otherwise make a conda environment using the .yaml file included here in `/resources`.
-
+```     
