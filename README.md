@@ -99,6 +99,6 @@ chrX    154835788       155026940       F8
 
                 these regions must not contain dashes in the regionnames, please replace with underscores
 
-                example: -m chrX:12345_23456,random;chrY:23455_23456,random2"
+                example: -m chrX:12345-23456,random;chrY:23455-23456,random2"
 
 ```     
