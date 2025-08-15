@@ -86,4 +86,13 @@ chrX    154835788       155026940       F8
         -R round
                 round to nearest 50kb when printing buffered targets
 
+        -m  manual targets
+                add targets  that can not be found in the ensembl database (e.g. gene clusters)
+
+                enter each as a coordinate,name pair and separate targets by semicolons.
+
+                these regions must not contain dashes in the regionnames, please replace with underscores
+                
+                example: -m chrX:12345_23456,random;chrY:23455_23456,random2"
+
 ```     

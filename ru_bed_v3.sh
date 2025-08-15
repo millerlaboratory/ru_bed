@@ -23,7 +23,7 @@ Help()
   echo "-m : manual targets to add that can not be found in the ensembl database (e.g. gene clusters) \
              enter each as a coordinate,name pair and separate targets by semicolons. \
              these regions must not contain dashes in the regionnames, please replace with underscores \
-             example: -m chrX:12345-23456,random;chrY:23455-23456,random2"
+             example: -m chrX:12345_23456,random;chrY:23455_23456,random2"
   echo ""
   echo ""
 }
