@@ -181,7 +181,7 @@ then
     #no manual targets exist
     echo ""
 else
-    echo $manualtargets | tr ':' '\t' | tr '-' '\t' | tr ',' '\t'| tr ';' '\n' >> $tempref
+    echo $manualtargets | tr ':' '\t' | tr '_' '\t' | tr ',' '\t'| tr ';' '\n' >> $tempref
 fi
 
 # rounding is disabled by default
