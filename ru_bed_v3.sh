@@ -18,8 +18,12 @@ Help()
   echo "-b : buffer to add to each side of each target. default is 100kb."
   echo "-B : Specify control buffer length, if different from gene buffer. default is 50kb"
   echo "-N : Naked run. No buffer is used and no controls are used. Overwrites other options"
-  echo "-h: view this help and exit"
-  echo "-s: do not save files to network, only to supplied output path that is part of prefix"
+  echo "-h : view this help and exit"
+  echo "-s : do not save files to network, only to supplied output path that is part of prefix"
+  echo "-m : manual targets to add that can not be found in the ensembl database (e.g. gene clusters) \
+             enter each as a coordinate,name pair and separate targets by semicolons. \
+             these regions must not contain dashes in the regionnames, please replace with underscores \
+             example: -m chrX:12345-23456,random;chrY:23455-23456,random2"
   echo ""
   echo ""
 }
@@ -38,7 +42,7 @@ resolution=50000
 round=0
 savenetwork=1
 
-while getopts "n:t:c:b:B:hNRs" option; do
+while getopts "n:t:c:b:B:hNRsm:" option; do
   case $option in
     n) NAME=$OPTARG ;;
     h) Help
@@ -50,6 +54,7 @@ while getopts "n:t:c:b:B:hNRs" option; do
     N) naked=1;;
     R) round=1;;
     s) savenetwork=0;;
+    m) manualtargets="$OPTARG";;
   esac
 done
 
@@ -144,6 +149,7 @@ do
     rm $tempgeneout
 done
 
+## add controls
 temprefcontrol=$(mktemp -t tmp.ruXXXXXrefcontrol.tsv)
 
 for gene in ${controls[@]}
@@ -168,6 +174,16 @@ do
     rm $tempgeneout
 done
 
+## add manual targets if they exist
+
+if [ -z ${manualtargets+x} ]
+then
+    #no manual targets exist
+    echo ""
+else
+    echo $manualtargets | tr ':' '\t' | tr '-' '\t' | tr ',' '\t'| tr ';' '\n' >> $tempref
+fi
+
 # rounding is disabled by default
 
 tempround=$(mktemp -t tmp.ruXXXXXrefround.tsv)
@@ -180,13 +196,13 @@ tempunmodified=$(mktemp -t tmp.ruXXXXXallgenesunmodified.tsv)
 if [[ $round -eq 1 ]]
 then
     echo "rounding to nearest 50kb"
-    cat $tempref | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;print $1,start,stop,$4}' > $tempround
-    cat $temprefcontrol | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;print $1,start,stop,$4}' > $temproundcontrol
+    cat $tempref | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4}' > $tempround
+    cat $temprefcontrol | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4}' > $temproundcontrol
 
     cat $tempround $temproundcontrol| sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
 else
-    cat $tempref | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;print $1,start,stop,$4}' > $tempbuffer
-    cat $temprefcontrol | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;print $1,start,stop,$4}' > $tempbuffercontrol
+    cat $tempref | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4}' > $tempbuffer
+    cat $temprefcontrol | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4}' > $tempbuffercontrol
     cat $tempbuffer $tempbuffercontrol | sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
 fi
 
