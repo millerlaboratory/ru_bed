@@ -90,7 +90,7 @@ chrX    154835788       155026940       F8
                 do not save files to network locations
 
         -S stranded
-                output strand in bed file (off by default)
+                apply buffer offset on strands (buffer applied upstream on + strand and downstream on - strand)
 
         -R round
                 round to nearest 50kb when printing buffered targets

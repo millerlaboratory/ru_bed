@@ -63,16 +63,7 @@ done
 
 echo ""
 
-if [[ $STRANDED -eq 1 ]]
-then
-    canonlibrary="resources/ensembl.gene.library.canonical.stranded.tsv"
-    synlibrary="resources/ensembl.gene.library.synonyms.stranded.tsv"
-    pseudolibrary="resources/ensembl.gene.library.pseudo.canon.stranded.tsv"
-    pseudosynlibrary="resources/ensembl.gene.library.pseudo.synonym.stranded.tsv"
-    fieldstring=6,7,8,14
-else
-    fieldstring=6,7,8
-fi
+fieldstring=6,7,8
 
 if [ -z ${NAME+x} ]
 then
@@ -211,19 +202,35 @@ tempunmodified=$(mktemp -t tmp.ruXXXXXallgenesunmodified.tsv)
 
 if [[ $STRANDED -eq 1 ]]
 then
+    temproundpos=$(mktemp -t tmp.ruXXXXXrefroundpos.tsv)
+    temproundcontrolpos=$(mktemp -t tmp.ruXXXXXrefbuffontrolpos.tsv)
+    temproundneg=$(mktemp -t tmp.ruXXXXXrefroundneg.tsv)
+    temproundcontrolneg=$(mktemp -t tmp.ruXXXXXrefbuffontrolneg.tsv)
+    tempbufferpos=$(mktemp -t tmp.ruXXXXXrefroundpos.tsv)
+    tempbufferneg=$(mktemp -t tmp.ruXXXXXrefroundneg.tsv)
+    tempbuffercontrolpos=$(mktemp -t tmp.ruXXXXXrefbuffcontrolpos.tsv)
+    tempbuffercontrolneg=$(mktemp -t tmp.ruXXXXXrefbuffcontrolneg.tsv)
+    tempallpos=$(mktemp -t tmp.ruXXXXXallgenespos.tsv)
+    tempallneg=$(mktemp -t tmp.ruXXXXXallgenesneg.tsv)
     if [[ $round -eq 1 ]]
     then
         echo "rounding to nearest 50kb"
-        cat $tempref | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4,$5}' > $tempround
-        cat $temprefcontrol | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4,$5}' > $temproundcontrol
+        cat $tempref | awk -v buffer=$buffer -v res=$resolution -v pout=$temproundpos -v nout=$temproundneg '{startP=int(($2-buffer)/res)*res;stopN=int(($3+buffer)/res)*res;startN=$2;stopP=$3;if(startP<1){startP=1};print $1,startP,stopP,$4 > pout; print $1,startN,stopN,$4 > nout; print $1,startP,stopN,$4}' > $tempround
+        cat $temprefcontrol | awk -v buffer=$buffer -v res=$resolution -v pout=$temproundcontrolpos -v nout=$temproundcontrolneg '{startP=int(($2-buffer)/res)*res;stopN=int(($3+buffer)/res)*res;startN=$2;stopP=$3;if(startP<1){startP=1};print $1,startP,stopP,$4 > pout; print $1,startN,stopN,$4 > nout; print $1,startP,stopN,$4}' > $temproundcontrol
 
+        cat $temproundpos $temproundcontrolpos| sort -k1,1 -k2,2n -k3,3n | uniq > $tempallpos
+        cat $temproundneg $temproundcontrolneg| sort -k1,1 -k2,2n -k3,3n | uniq > $tempallneg
         cat $tempround $temproundcontrol| sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
     else
-        cat $tempref | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4,$5}' > $tempbuffer
-        cat $temprefcontrol | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4,$5}' > $tempbuffercontrol
+        cat $tempref | awk -v buffer=$buffer -v pout=$tempbufferpos -v nout=$tempbufferneg  '{startP=$2-buffer;stopN=$3+buffer;startN=$2;stopP=$3;if(startP<1){startP=1};print $1,startP,stopP,$4 > pout; print $1,startN,stopN,$4 > nout; print $1,startP,stopN,$4}' > $tempbuffer
+        cat $temprefcontrol | awk -v buffer=$buffer -v pout=$tempbuffercontrolpos -v nout=$tempbuffercontrolneg '{startP=$2-buffer;stopN=$3+buffer;startN=$2;stopP=$3;if(startP<1){startP=1};print $1,startP,stopP,$4 > pout; print $1,startN,stopN,$4 > nout; print $1,startP,stopN,$4}' > $tempbuffercontrol
+        cat $tempbufferpos $tempbuffercontrolpos | sort -k1,1 -k2,2n -k3,3n | uniq > $tempallpos
+        cat $tempbufferneg $tempbuffercontrolneg | sort -k1,1 -k2,2n -k3,3n | uniq > $tempallneg
         cat $tempbuffer $tempbuffercontrol | sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
     fi
+    rm $temproundpos $temproundneg $temproundcontrolpos $temproundcontrolneg $tempbufferpos $tempbufferneg $tempbuffercontrolpos $tempbuffercontrolneg
 else
+    
     if [[ $round -eq 1 ]]
     then
         echo "rounding to nearest 50kb"
@@ -305,65 +312,6 @@ fixOverlapRecur () {
     return
 }
 
-fixOverlapRecurStrandAware () {
-    filename=$1
-    index=$2
-    output=$3
-
-    filelines=( $(wc -l $filename | tr -s ' ' | cut -d ' ' -f1 ))
-    let looplimit=$filelines-1
-    let i=$index
-    while [ $i -lt $looplimit ]
-    do
-        let j=$i+1
-        let k=$j+1
-        thisline=( $( sed -n "$j"'p' $filename) )
-        nextline=( $( sed -n "$k"'p' $filename) )
-
-        #only find overlap if chromosome is the same
-        if [[ ${nextline[0]} == ${thisline[0]} ]]
-        then
-            if [[ ${nextline[1]} -le ${thisline[2]} ]]
-            then
-                startpos=${thisline[1]}
-                if [[ ${nextline[4]} == ${thisline[4]} ]]
-                then
-                    genename=${thisline[4]}
-                else
-                    genename="${thisline[4]}.${nextline[4]}"
-                fi
-                chrname=${thisline[0]}
-                strand=${thisline[3]}
-                if [[ ${thisline[2]} -gt ${nextline[2]} ]]
-                then
-                    endpos=${thisline[2]}
-                else
-                    endpos=${nextline[2]}
-                fi
-                #cat $filename | sed "$j","$k"d > $temp.for.$index.tsv
-                tempfori=$(mktemp -t tmp.ruXXXXXfor"$index".tsv)
-                awk -v line=$j 'NR<line{print $0}NR==line{exit}' $filename > $tempfori 
-                echo -e "$chrname\t$startpos\t$endpos\t$strand\t$genename" >> $tempfori
-                awk -v line=$k 'NR>line{print $0}' $filename >> $tempfori
-                fixOverlapRecurStrandAware $tempfori $i $output
-                return
-            else
-                ((i++))
-                fixOverlapRecurStrandAware $filename $i $output
-                return
-            fi
-        else
-            ((i++))
-            fixOverlapRecurStrandAware $filename $i $output
-            return
-        fi
-    done
-    
-    cat $filename | tr ' ' '\t' > $output
-    return
-}
-
-
 namedoutput=$NAME.named.targets.bed
 sequenceroutput=$NAME.targets.bed
 nakednamedoutput=$NAME.naked.named.targets.bed
@@ -388,16 +336,21 @@ else
         cp $tempfinal $namedoutput
         awk '{print $1,$2,$3}' $tempfinal | tr ' ' '\t' > $sequenceroutput
     else
-        tempposstrand=$(mktemp -t tmp.ruXXXXXpos.tsv)
-        tempnegstrand=$(mktemp -t tmp.ruXXXXXneg.tsv)
-        tempposresults=$(mktemp -t tmp.ruXXXXXposfinal.tsv)
-        tempnegresults=$(mktemp -t tmp.ruXXXXXnegfinal.tsv)
-        cat $tempall | awk -v posout=$tempposstrand -v negout=$tempnegstrand '{if($5==1){print $0>$posout}else{print $0>negout}}'
-        fixOverlapRecurStrandAware $tempposstrand 0 $tempposresults
-        fixOverlapRecurStrandAware $tempnegstrand 0 $tempnegresults
-        cat $tempposresults $tempnegresults | sort -k1,1 -k2,2n -k3,3n > $tempfinal
-        cp $tempfinal $namedoutput
-        awk '{if($4==-1){strand="-"}else{strand="+"};print $1,$2,$3,$5,"0",strand}' $namedoutput | tr ' ' '\t' > $sequenceroutput
+        tempfinalshort=$(mktemp -t tmp.ruXXXXXfinalcollapsed.tsv)
+        tempfinalpos=$(mktemp -t tmp.ruXXXXXposfinal.tsv)
+        tempfinalneg=$(mktemp -t tmp.ruXXXXXnegfinal.tsv)
+        tempunsorted=$(mktemp -t tmp.ruXXXXXcatunsorted.tsv)
+
+        fixOverlapRecur $tempallpos 0 $tempfinalpos
+        fixOverlapRecur $tempallneg 0 $tempfinalneg
+        cat $tempfinalpos | awk '{print $0,".","+"}' | tr ' ' '\t' > $tempunsorted
+        cat $tempfinalneg | awk '{print $0,".","-"}' | tr ' ' '\t' >> $tempunsorted
+        cat $tempunsorted | sort -k1,1 -k2,2n -k3,3n > $tempfinal
+
+        #named output used for HPDP has a collapsed buffer
+        fixOverlapRecur $tempall 0 $tempfinalshort
+        cp $tempfinalshort $namedoutput
+        cp $tempfinal $sequenceroutput
     fi
 
     totbuffered=$(awk '{tot+=($3-$2)}END{print tot}' $tempfinal)
