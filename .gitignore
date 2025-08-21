@@ -1,6 +1,7 @@
 construction/
 archive/
 test*
+ont/
 *.bed
 *.txt
 add_strand/
