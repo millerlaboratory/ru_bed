@@ -20,6 +20,7 @@ Help()
   echo "-N : Naked run. No buffer is used and no controls are used. Overwrites other options"
   echo "-h : view this help and exit"
   echo "-s : do not save files to network, only to supplied output path that is part of prefix"
+  echo "-S : output strand in bed file (disabled by default)"
   echo "-m : manual targets to add that can not be found in the ensembl database (e.g. gene clusters) \
              enter each as a coordinate,name pair and separate targets by semicolons. \
              these regions must not contain dashes in the regionnames, please replace with underscores \
@@ -41,8 +42,9 @@ controlbuffer=100000
 resolution=50000
 round=0
 savenetwork=1
+STRANDED=0
 
-while getopts "n:t:c:b:B:hNRsm:" option; do
+while getopts "n:t:c:b:B:hNRsm:S" option; do
   case $option in
     n) NAME=$OPTARG ;;
     h) Help
@@ -54,11 +56,23 @@ while getopts "n:t:c:b:B:hNRsm:" option; do
     N) naked=1;;
     R) round=1;;
     s) savenetwork=0;;
+    S) STRANDED=1;;
     m) manualtargets="$OPTARG";;
   esac
 done
 
 echo ""
+
+if [[ $STRANDED -eq 1 ]]
+then
+    canonlibrary="resources/ensembl.gene.library.canonical.stranded.tsv"
+    synlibrary="resources/ensembl.gene.library.synonyms.stranded.tsv"
+    pseudolibrary="resources/ensembl.gene.library.pseudo.canon.stranded.tsv"
+    pseudosynlibrary="resources/ensembl.gene.library.pseudo.synonym.stranded.tsv"
+    fieldstring=6,7,8,14
+else
+    fieldstring=6,7,8
+fi
 
 if [ -z ${NAME+x} ]
 then
@@ -107,7 +121,9 @@ do
 
     #first search library of genes
 
-    grep $gene $canonlibrary | awk -v gene=$gene -v id=$idfield -F '\t' '{if($(id)==gene){print $6,$7,$8,$(id)}}' | tr ' ' '\t' > $tempgeneout
+    #grep $gene $canonlibrary | awk -v gene=$gene -v id=$idfield -F '\t' '{if($(id)==gene){print $6,$7,$8,$(id)}}' | tr ' ' '\t' > $tempgeneout
+    grep $gene $canonlibrary | awk -v gene=$gene -v id=$idfield -v fieldstring=$fieldstring -F '\t' 'BEGIN{split(fieldstring,fieldlist,",")}{if($(id)==gene){for(i in fieldlist){printf $fieldlist[i]" "};printf$(id)" \n";}}' | tr ' ' '\t' > $tempgeneout
+    
     results=$( wc -l $tempgeneout | tr -s ' ' | cut -d ' ' -f1 )
     if [[ $results -gt 0 ]]
     then
@@ -119,21 +135,21 @@ do
         fi
     else
         # next search synonyms of genes
-        grep $gene $synlibrary | awk -v gene=$gene -v id=$idfield -F '\t' '{if($(id)==gene){print $6,$7,$8,$(id)}}' | tr ' ' '\t' > $tempgeneout
+        grep $gene $synlibrary | awk -v gene=$gene -v id=$idfield -v fieldstring=$fieldstring -F '\t' 'BEGIN{split(fieldstring,fieldlist,",")}{if($(id)==gene){for(i in fieldlist){printf $fieldlist[i]" "};printf$(id)" \n";}}' | tr ' ' '\t' > $tempgeneout
         results=$( wc -l $tempgeneout | tr -s ' ' | cut -d ' ' -f1 )
         if [[ $results -gt 0 ]]
         then
             cat $tempgeneout >> $tempref
         else
             # next search pseudogenes
-            grep $gene $pseudolibrary | awk -v gene=$gene -v id=$idfield -F '\t' '{if($(id)==gene){print $6,$7,$8,$(id)}}' | tr ' ' '\t' > $tempgeneout
+            grep $gene $pseudolibrary | awk -v gene=$gene -v id=$idfield -v fieldstring=$fieldstring -F '\t' 'BEGIN{split(fieldstring,fieldlist,",")}{if($(id)==gene){for(i in fieldlist){printf $fieldlist[i]" "};printf$(id)" \n";}}' | tr ' ' '\t' > $tempgeneout
             results=$( wc -l $tempgeneout | tr -s ' ' | cut -d ' ' -f1 )
             if [[ $results -gt 0 ]]
             then
                 cat $tempgeneout >> $tempref
             else
                 # lastly search synonyms of pseudogenes
-                grep $gene $pseudosynlibrary | awk -v gene=$gene -v id=$idfield -F '\t' '{if($(id)==gene){print $6,$7,$8,$(id)}}' | tr ' ' '\t' > $tempgeneout
+                grep $gene $pseudosynlibrary | awk -v gene=$gene -v id=$idfield -v fieldstring=$fieldstring -F '\t' 'BEGIN{split(fieldstring,fieldlist,",")}{if($(id)==gene){for(i in fieldlist){printf $fieldlist[i]" "};printf$(id)" \n";}}' | tr ' ' '\t' > $tempgeneout
                 results=$( wc -l $tempgeneout | tr -s ' ' | cut -d ' ' -f1 )
                 if [[ $results -gt 0 ]]
                 then
@@ -155,13 +171,13 @@ temprefcontrol=$(mktemp -t tmp.ruXXXXXrefcontrol.tsv)
 for gene in ${controls[@]}
 do
     tempgeneout=$(mktemp -t tmp.ruXXXXXgeneout.tsv)
-    grep $gene $canonlibrary | awk -v gene=$gene '{if($1==gene){print $6,$7,$8,$1}}' | tr ' ' '\t' > $tempgeneout
+    grep $gene $canonlibrary | awk -v gene=$gene -v id=1 -v fieldstring=$fieldstring -F '\t' 'BEGIN{split(fieldstring,fieldlist,",")}{if($(id)==gene){for(i in fieldlist){printf $fieldlist[i]" "};printf$(id)" \n";}}' | tr ' ' '\t' > $tempgeneout
     results=$( wc -l $tempgeneout | tr -s ' ' | cut -d ' ' -f1 )
     if [[ $results -gt 0 ]]
     then
         cat $tempgeneout >> $temprefcontrol
     else
-        grep $gene $synlibrary | awk -v gene=$gene '{if($1==gene){print $6,$7,$8,$1}}' | tr ' ' '\t' > $tempgeneout
+        grep $gene $synlibrary | awk -v gene=$gene -v id=1 -v fieldstring=$fieldstring -F '\t' 'BEGIN{split(fieldstring,fieldlist,",")}{if($(id)==gene){for(i in fieldlist){printf $fieldlist[i]" "};printf$(id)" \n";}}' | tr ' ' '\t' > $tempgeneout
         results=$( wc -l $tempgeneout | tr -s ' ' | cut -d ' ' -f1 )
         if [[ $results -gt 0 ]]
         then
@@ -193,18 +209,36 @@ tempbuffercontrol=$(mktemp -t tmp.ruXXXXXrefbuffcontrol.tsv)
 tempall=$(mktemp -t tmp.ruXXXXXallgenes.tsv)
 tempunmodified=$(mktemp -t tmp.ruXXXXXallgenesunmodified.tsv)
 
-if [[ $round -eq 1 ]]
+if [[ $STRANDED -eq 1 ]]
 then
-    echo "rounding to nearest 50kb"
-    cat $tempref | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4}' > $tempround
-    cat $temprefcontrol | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4}' > $temproundcontrol
+    if [[ $round -eq 1 ]]
+    then
+        echo "rounding to nearest 50kb"
+        cat $tempref | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4,$5}' > $tempround
+        cat $temprefcontrol | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4,$5}' > $temproundcontrol
 
-    cat $tempround $temproundcontrol| sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
+        cat $tempround $temproundcontrol| sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
+    else
+        cat $tempref | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4,$5}' > $tempbuffer
+        cat $temprefcontrol | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4,$5}' > $tempbuffercontrol
+        cat $tempbuffer $tempbuffercontrol | sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
+    fi
 else
-    cat $tempref | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4}' > $tempbuffer
-    cat $temprefcontrol | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4}' > $tempbuffercontrol
-    cat $tempbuffer $tempbuffercontrol | sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
+    if [[ $round -eq 1 ]]
+    then
+        echo "rounding to nearest 50kb"
+        cat $tempref | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4}' > $tempround
+        cat $temprefcontrol | awk -v buffer=$buffer -v res=$resolution '{start=int(($2-buffer)/res)*res;stop=int(($3+buffer)/res)*res;if(start<1){start=1};print $1,start,stop,$4}' > $temproundcontrol
+
+        cat $tempround $temproundcontrol| sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
+    else
+        cat $tempref | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4}' > $tempbuffer
+        cat $temprefcontrol | awk -v buffer=$buffer '{start=$2-buffer;stop=$3+buffer;if(start<1){start=1};print $1,start,stop,$4}' > $tempbuffercontrol
+        cat $tempbuffer $tempbuffercontrol | sort -k1,1 -k2,2n -k3,3n | uniq > $tempall
+    fi
 fi
+
+
 
 cat $tempref $temprefcontrol | sort -k1,1 -k2,2n -k3,3n | uniq > $tempunmodified
 
@@ -216,13 +250,8 @@ tempfinal=$(mktemp -t tmp.ruXXXXXfinal.tsv)
 
 fixOverlapRecur () {
     filename=$1
-    
-    if [[ "$#" -gt 1 ]]
-    then
-        index=$2
-    else
-        index=0
-    fi
+    index=$2
+    output=$3
 
     filelines=( $(wc -l $filename | tr -s ' ' | cut -d ' ' -f1 ))
     let looplimit=$filelines-1
@@ -258,23 +287,82 @@ fixOverlapRecur () {
                 awk -v line=$j 'NR<line{print $0}NR==line{exit}' $filename > $tempfori 
                 echo -e "$chrname\t$startpos\t$endpos\t$genename" >> $tempfori
                 awk -v line=$k 'NR>line{print $0}' $filename >> $tempfori
-                fixOverlapRecur $tempfori $i
+                fixOverlapRecur $tempfori $i $output
                 return
             else
                 ((i++))
-                fixOverlapRecur $filename $i
+                fixOverlapRecur $filename $i $output
                 return
             fi
         else
             ((i++))
-            fixOverlapRecur $filename $i
+            fixOverlapRecur $filename $i $output
             return
         fi
     done
     
-    cat $filename | tr ' ' '\t' > $tempfinal
+    cat $filename | tr ' ' '\t' > $output
     return
 }
+
+fixOverlapRecurStrandAware () {
+    filename=$1
+    index=$2
+    output=$3
+
+    filelines=( $(wc -l $filename | tr -s ' ' | cut -d ' ' -f1 ))
+    let looplimit=$filelines-1
+    let i=$index
+    while [ $i -lt $looplimit ]
+    do
+        let j=$i+1
+        let k=$j+1
+        thisline=( $( sed -n "$j"'p' $filename) )
+        nextline=( $( sed -n "$k"'p' $filename) )
+
+        #only find overlap if chromosome is the same
+        if [[ ${nextline[0]} == ${thisline[0]} ]]
+        then
+            if [[ ${nextline[1]} -le ${thisline[2]} ]]
+            then
+                startpos=${thisline[1]}
+                if [[ ${nextline[4]} == ${thisline[4]} ]]
+                then
+                    genename=${thisline[4]}
+                else
+                    genename="${thisline[4]}.${nextline[4]}"
+                fi
+                chrname=${thisline[0]}
+                strand=${thisline[3]}
+                if [[ ${thisline[2]} -gt ${nextline[2]} ]]
+                then
+                    endpos=${thisline[2]}
+                else
+                    endpos=${nextline[2]}
+                fi
+                #cat $filename | sed "$j","$k"d > $temp.for.$index.tsv
+                tempfori=$(mktemp -t tmp.ruXXXXXfor"$index".tsv)
+                awk -v line=$j 'NR<line{print $0}NR==line{exit}' $filename > $tempfori 
+                echo -e "$chrname\t$startpos\t$endpos\t$strand\t$genename" >> $tempfori
+                awk -v line=$k 'NR>line{print $0}' $filename >> $tempfori
+                fixOverlapRecurStrandAware $tempfori $i $output
+                return
+            else
+                ((i++))
+                fixOverlapRecurStrandAware $filename $i $output
+                return
+            fi
+        else
+            ((i++))
+            fixOverlapRecurStrandAware $filename $i $output
+            return
+        fi
+    done
+    
+    cat $filename | tr ' ' '\t' > $output
+    return
+}
+
 
 namedoutput=$NAME.named.targets.bed
 sequenceroutput=$NAME.targets.bed
@@ -294,9 +382,23 @@ then
     cat $tempall | tr ' ' '\t' > $namedoutput
     awk '{print $1,$2,$3}' $tempall | tr ' ' '\t' > $sequenceroutput
 else
-    fixOverlapRecur $tempall
-    cp $tempfinal $namedoutput
-    awk '{print $1,$2,$3}' $tempfinal | tr ' ' '\t' > $sequenceroutput
+    if [[ $STRANDED -eq 0 ]]
+    then
+        fixOverlapRecur $tempall 0 $tempfinal
+        cp $tempfinal $namedoutput
+        awk '{print $1,$2,$3}' $tempfinal | tr ' ' '\t' > $sequenceroutput
+    else
+        tempposstrand=$(mktemp -t tmp.ruXXXXXpos.tsv)
+        tempnegstrand=$(mktemp -t tmp.ruXXXXXneg.tsv)
+        tempposresults=$(mktemp -t tmp.ruXXXXXposfinal.tsv)
+        tempnegresults=$(mktemp -t tmp.ruXXXXXnegfinal.tsv)
+        cat $tempall | awk -v posout=$tempposstrand -v negout=$tempnegstrand '{if($5==1){print $0>$posout}else{print $0>negout}}'
+        fixOverlapRecurStrandAware $tempposstrand 0 $tempposresults
+        fixOverlapRecurStrandAware $tempnegstrand 0 $tempnegresults
+        cat $tempposresults $tempnegresults | sort -k1,1 -k2,2n -k3,3n > $tempfinal
+        cp $tempfinal $namedoutput
+        awk '{if($4==-1){strand="-"}else{strand="+"};print $1,$2,$3,$5,"0",strand}' $namedoutput | tr ' ' '\t' > $sequenceroutput
+    fi
 
     totbuffered=$(awk '{tot+=($3-$2)}END{print tot}' $tempfinal)
     totbufferedM=$(echo "scale=2; $totbuffered / 1000000" | bc )

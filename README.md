@@ -89,6 +89,9 @@ chrX    154835788       155026940       F8
         -s networksave
                 do not save files to network locations
 
+        -S stranded
+                output strand in bed file (off by default)
+
         -R round
                 round to nearest 50kb when printing buffered targets
 

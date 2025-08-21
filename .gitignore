@@ -1,3 +1,6 @@
 construction/
 archive/
 test*
+*.bed
+*.txt
+add_strand/
